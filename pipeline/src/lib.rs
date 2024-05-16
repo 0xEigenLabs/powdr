@@ -9,12 +9,44 @@ pub mod test_util;
 pub mod util;
 pub mod verify;
 
+use std::collections::BTreeMap;
+use std::sync::{Arc, Mutex};
+
 pub use pipeline::Pipeline;
 
 pub use powdr_backend::{BackendType, Proof};
 use powdr_executor::witgen::QueryCallback;
 
 use powdr_number::FieldElement;
+
+#[derive(Clone)]
+pub struct HostContext<T> {
+    // Shared mutable state
+    pub data: Arc<Mutex<BTreeMap<u32, Vec<u8>>>>,
+    // The callable part of the Database, implemented via a closure
+    pub cb: Arc<dyn QueryCallback<T>>,
+}
+
+impl<T: FieldElement> HostContext<T> {
+    pub fn new() -> Self
+    {
+        let data_arc = Arc::new(Mutex::new(BTreeMap::<u32, Vec<u8>>::new()));
+        let data_for_closure = data_arc.clone();
+        
+        let cb = Arc::new(move |query: &str| -> Result<Option<T>, String> {
+            let mut map = data_for_closure.lock().unwrap();
+            map.insert(666, vec![
+                0x01, 0x02, 0x03, 0x04, 0x05, 0x06
+            ]);
+            Err("Unsupported query".to_string())
+        });
+
+        Self {
+            data: data_arc,
+            cb,
+        }
+    }
+}
 
 // TODO at some point, we could also just pass evaluator::Values around - would be much faster.
 pub fn parse_query(query: &str) -> Result<(&str, Vec<&str>), String> {
@@ -108,15 +140,20 @@ pub fn handle_simple_queries_callback<'a, T: FieldElement>() -> impl QueryCallba
         let (id, data) = parse_query(query)?;
         match id {
             "None" => Ok(None),
-            "PrintChar" => {
-                assert_eq!(data.len(), 1);
-                print!(
-                    "{}",
-                    data[0]
-                        .parse::<u8>()
-                        .map_err(|e| format!("Invalid char to print: {e}"))?
-                        as char
-                );
+            "Output" => {
+                assert_eq!(data.len(), 2);
+                let fd = data[0]
+                    .parse::<u32>()
+                    .map_err(|e| format!("Invalid fd: {e}"))?;
+                let byte = data[1]
+                    .parse::<u8>()
+                    .map_err(|e| format!("Invalid char to print: {e}"))?
+                    as char;
+                match fd {
+                    1 => print!("{}", byte),
+                    2 => eprint!("{}", byte),
+                    _ => return Err(format!("Unsupported file descriptor: {fd}")),
+                }
                 Ok(Some(0.into()))
             }
             "Hint" => {

@@ -59,7 +59,7 @@ impl<'a, 'b, T: FieldElement, QueryCallback: super::QueryCallback<T>>
         };
         Ok(
             if let Some(value) =
-                (self.query_callback)(&query_str).map_err(super::EvalError::ProverQueryError)?
+            (self.query_callback)(&query_str).map_err(super::EvalError::ProverQueryError)?
             {
                 EvalValue::complete(vec![(poly, Constraint::Assignment(value))])
             } else {
