@@ -8,8 +8,8 @@ use super::memory_merkle_tree::MerkleTree;
 /// 32-Bit architecture -> 2^32 bytes of addressable memory
 pub const MEMORY_SIZE_LOG: usize = 32;
 
-/// Page size is 8KB
-pub const PAGE_SIZE_BYTES_LOG: usize = 13;
+/// Page size is 64KB
+pub const PAGE_SIZE_BYTES_LOG: usize = 16;
 
 /// 32-Bit architecture -> 4 bytes per word
 pub const BYTES_PER_WORD: usize = 4;
@@ -248,7 +248,7 @@ mstore_bootloader x3 * {PAGE_SIZE_BYTES} + {i} * {BYTES_PER_WORD}, {reg};"#
 // We commit to the memory content by hashing it in pages of {WORDS_PER_PAGE} words each.
 // These hashes are stored in a binary Merkle tree of depth {MERKLE_TREE_DEPTH}.
 // At this point, the current page hash is in P0-P3.
-// 
+//
 // Now, we re-computed the Merkle root twice, in two phases:
 // - First using the current page hash, as computed by the bootloader. The prover provides
 //   the sibling values. At the end of this phase, the re-computed Merkle root is asserted
