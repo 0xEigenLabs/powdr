@@ -536,6 +536,11 @@ impl<'a, T: FieldElement> BlockMachine<'a, T> {
         }
 
         if self.rows() + self.block_size as DegreeType >= self.fixed_data.degree {
+            log::debug!("row {}, block_size {}, fixed_data.degree {}",
+                self.rows(),
+                self.block_size,
+                self.fixed_data.degree,
+            );
             return Err(EvalError::RowsExhausted(self.name.clone()));
         }
 
