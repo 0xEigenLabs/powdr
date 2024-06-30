@@ -8,8 +8,8 @@ use super::memory_merkle_tree::MerkleTree;
 /// 32-Bit architecture -> 2^32 bytes of addressable memory
 pub const MEMORY_SIZE_LOG: usize = 32;
 
-/// Page size is 64 * 8KB
-pub const PAGE_SIZE_BYTES_LOG: usize = 19;
+/// Page size is 64 * 8 * 4KB
+pub const PAGE_SIZE_BYTES_LOG: usize = 21;
 
 /// 32-Bit architecture -> 4 bytes per word
 pub const BYTES_PER_WORD: usize = 4;
