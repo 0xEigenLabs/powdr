@@ -12,6 +12,7 @@ default = []
 halo2 = ["dep:halo2_proofs", "dep:halo2_curves", "dep:snark-verifier", "dep:halo2_solidity_verifier"]
 estark-polygon = ["dep:pil-stark-prover"]
 plonky3 = ["dep:powdr-plonky3"]
+starky-avx512 = ["starky/avx512"]
 
 [dependencies]
 powdr-ast.workspace = true
