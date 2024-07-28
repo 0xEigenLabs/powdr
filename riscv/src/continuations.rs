@@ -459,8 +459,7 @@ pub fn rust_continuations_dry_run<F: FieldElement>(
                         chunk_trace[reg][chunk_i],
                         full_trace[reg][full_i],
                     );
-                    //FIXME: skipped for test!!!
-                    //panic!();
+                    panic!();
                 }
             }
         }
