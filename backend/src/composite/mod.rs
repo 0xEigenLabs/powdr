@@ -19,32 +19,34 @@ use crate::{Backend, BackendFactory, BackendOptions, Error, Proof};
 
 use self::sub_prover::RunStatus;
 
-mod split;
+pub mod split;
 
 /// Maps each size to the corresponding verification key.
 type VerificationKeyBySize = BTreeMap<usize, Vec<u8>>;
 
 /// A composite verification key that contains a verification key for each machine separately.
 #[derive(Serialize, Deserialize)]
-struct CompositeVerificationKey {
+pub struct CompositeVerificationKey {
     /// Verification keys for each machine (if available, otherwise None), sorted by machine name.
-    verification_keys: Vec<Option<VerificationKeyBySize>>,
+    pub verification_keys: Vec<Option<VerificationKeyBySize>>,
 }
 
 /// A proof for a single machine.
 #[derive(Serialize, Deserialize)]
-struct MachineProof {
+pub struct MachineProof {
+    /// machine name
+    pub machine: String,
     /// The (dynamic) size of the machine.
-    size: usize,
+    pub size: usize,
     /// The proof for the machine.
-    proof: Vec<u8>,
+    pub proof: Vec<u8>,
 }
 
 /// A composite proof that contains a proof for each machine separately, sorted by machine name.
 #[derive(Serialize, Deserialize)]
-struct CompositeProof {
+pub struct CompositeProof {
     /// Machine proofs, sorted by machine name.
-    proofs: Vec<MachineProof>,
+    pub proofs: Vec<MachineProof>,
 }
 
 pub(crate) struct CompositeBackendFactory<F: FieldElement, B: BackendFactory<F>> {
@@ -340,7 +342,7 @@ impl<'a, F: FieldElement> Backend<'a, F> for CompositeBackend<'a, F> {
                     .into_iter()
                     .filter_map(|(status, machine_data, size)| match status {
                         sub_prover::RunStatus::Completed(result) => {
-                            proof_results.push((result, size));
+                            proof_results.push((machine_data.0, result, size));
                             None
                         }
                         sub_prover::RunStatus::Challenged(sub_prover, c) => {
@@ -377,8 +379,8 @@ impl<'a, F: FieldElement> Backend<'a, F> for CompositeBackend<'a, F> {
 
             let proofs = proof_results
                 .into_iter()
-                .map(|(proof, size)| match proof {
-                    Ok(proof) => Ok(MachineProof { size, proof }),
+                .map(|(machine, proof, size)| match proof {
+                    Ok(proof) => Ok(MachineProof { machine: machine.clone(), size, proof }),
                     Err(e) => {
                         log::error!("==> Machine proof failed: {:?}", e);
                         Err(e)

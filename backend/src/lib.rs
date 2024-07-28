@@ -6,7 +6,7 @@ mod halo2;
 #[cfg(feature = "plonky3")]
 mod plonky3;
 
-mod composite;
+pub mod composite;
 
 use powdr_ast::analyzed::Analyzed;
 use powdr_executor::{constant_evaluator::VariablySizedColumn, witgen::WitgenCallback};
