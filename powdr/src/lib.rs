@@ -55,7 +55,7 @@ impl SessionBuilder {
             ),
             out_path: self.out_path,
         }
-        .with_backend(powdr_backend::BackendType::Plonky3)
+        .with_backend(powdr_backend::BackendType::EStarkStarkyComposite)
     }
 
     /// Sets the path to the guest program.

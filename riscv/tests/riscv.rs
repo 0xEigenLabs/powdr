@@ -10,7 +10,7 @@ use powdr_pipeline::{
     Pipeline,
 };
 use powdr_riscv_executor::ProfilerOptions;
-use std::path::{Path, PathBuf};
+use std::{io::Read, path::{Path, PathBuf}};
 use test_log::test;
 
 use powdr_riscv::{
@@ -43,10 +43,15 @@ fn run_continuations_test(case: &str, powdr_asm: String) {
     // Manually create tmp dir, so that it is the same in all chunks.
     let tmp_dir = mktemp::Temp::new_dir().unwrap();
 
+    let mut file = std::fs::File::open("/mnt/nfs/sy/groth16/proof.bin").unwrap();
+    let mut data = vec![];
+    file.read_to_end(&mut data).unwrap();
+
     let mut pipeline = Pipeline::<GoldilocksField>::default()
         .from_asm_string(powdr_asm.clone(), Some(PathBuf::from(&case)))
         .with_prover_inputs(Default::default())
-        .with_output(tmp_dir.to_path_buf(), false);
+        .with_output(tmp_dir.to_path_buf(), false)
+        .add_data(666, &data);
     let pipeline_callback = |pipeline: &mut Pipeline<GoldilocksField>| -> Result<(), ()> {
         run_pilcom_with_backend_variant(pipeline.clone(), BackendVariant::Composite).unwrap();
 
@@ -503,9 +508,13 @@ fn output_syscall_with_options<T: FieldElement>(options: CompilerOptions) {
 }
 
 #[test]
-#[ignore = "Too slow"]
 fn many_chunks() {
     test_continuations("many_chunks")
+}
+
+#[test]
+fn ark_groth16() {
+    test_continuations("ark")
 }
 
 #[test]
