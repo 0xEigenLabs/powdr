@@ -43,15 +43,10 @@ fn run_continuations_test(case: &str, powdr_asm: String) {
     // Manually create tmp dir, so that it is the same in all chunks.
     let tmp_dir = mktemp::Temp::new_dir().unwrap();
 
-    let mut file = std::fs::File::open("/mnt/nfs/sy/groth16/proof.bin").unwrap();
-    let mut data = vec![];
-    file.read_to_end(&mut data).unwrap();
-
     let mut pipeline = Pipeline::<GoldilocksField>::default()
         .from_asm_string(powdr_asm.clone(), Some(PathBuf::from(&case)))
         .with_prover_inputs(Default::default())
-        .with_output(tmp_dir.to_path_buf(), false)
-        .add_data(666, &data);
+        .with_output(tmp_dir.to_path_buf(), false);
     let pipeline_callback = |pipeline: &mut Pipeline<GoldilocksField>| -> Result<(), ()> {
         run_pilcom_with_backend_variant(pipeline.clone(), BackendVariant::Composite).unwrap();
 
@@ -514,7 +509,49 @@ fn many_chunks() {
 
 #[test]
 fn ark_groth16() {
-    test_continuations("ark")
+    let case = "ark";
+
+    let temp_dir = PathBuf::from("/mnt/data/sy/powdr/tmp_executable");
+    std::fs::create_dir_all(&temp_dir).unwrap();
+
+    let executable = powdr_riscv::compile_rust_crate_to_riscv(
+        &format!("tests/riscv_data/{case}/Cargo.toml"),
+        &temp_dir,
+        None,
+    );
+
+    // Test continuations from ELF file.
+    let powdr_asm = powdr_riscv::elf::translate(
+        &executable,
+        CompilerOptions::new_gl()
+            .with_poseidon()
+            .with_continuations(),
+    );
+    
+    let tmp_dir = PathBuf::from("/mnt/data/sy/powdr/tmp_dir");
+    std::fs::create_dir_all(&tmp_dir).unwrap();
+
+    let mut proof_file = std::fs::File::open("/mnt/nfs/sy/powdr/riscv/tests/riscv_data/ark/src/proof.bin").unwrap();
+    let mut proof_data = vec![];
+    proof_file.read_to_end(&mut proof_data).unwrap();
+
+    let mut pvk_file = std::fs::File::open("/mnt/nfs/sy/powdr/riscv/tests/riscv_data/ark/src/pvk.bin").unwrap();
+    let mut pvk_data = vec![];
+    pvk_file.read_to_end(&mut pvk_data).unwrap();
+
+    let mut pipeline = Pipeline::<GoldilocksField>::default()
+        .from_asm_string(powdr_asm.clone(), Some(PathBuf::from(&case)))
+        .with_prover_inputs(Default::default())
+        .with_output(tmp_dir, false)
+        .add_data(666, &proof_data)
+        .add_data(667, &pvk_data);
+    let pipeline_callback = |pipeline: &mut Pipeline<GoldilocksField>| -> Result<(), ()> {
+        run_pilcom_with_backend_variant(pipeline.clone(), BackendVariant::Composite).unwrap();
+
+        Ok(())
+    };
+    let bootloader_inputs = rust_continuations_dry_run(&mut pipeline, Default::default());
+    rust_continuations(&mut pipeline, pipeline_callback, bootloader_inputs).unwrap();
 }
 
 #[test]

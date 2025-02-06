@@ -12,7 +12,7 @@ use static_assertions::const_assert;
 pub const MEMORY_SIZE_LOG: usize = 32;
 
 /// Page size is 2KB
-pub const PAGE_SIZE_BYTES_LOG: usize = 11;
+pub const PAGE_SIZE_BYTES_LOG: usize = 14;
 
 /// 32-Bit architecture -> 4 bytes per word
 pub const BYTES_PER_WORD: usize = 4;

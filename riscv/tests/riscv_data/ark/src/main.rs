@@ -30,26 +30,15 @@ use ark_relations::{
     r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisError, Variable},
 };
 
-const TEST_CHANNEL: u32 = 666;
-
-// static PROOF_BYTES: &[u8] = include_bytes!("proof.bin");
-// static PVK_BYTES: &[u8] = include_bytes!("pvk.bin");
+const PROOF_CHANNEL: u32 = 666;
+const PVK_CHANNEL: u32 = 667;
 
 #[no_mangle]
 fn main() {
-    // use ark_groth16::Groth16;
-    // use rand_chacha::ChaCha20Rng;
-    // use rand_core::{RngCore, SeedableRng};
-    // use ark_ff::Field;
-    // use core::time::Duration;
+    use ark_groth16::Groth16;
 
-    // let rand: u64 = 10393729187455219830;
-    // // // Generate the MiMC round constants as finite field elements
-    // let constants = (0..MIMC_ROUNDS)
-    //     .map(|_| Fr::from(rand))
-    //     .collect::<Vec<_>>();
-
-    let pvk_bytes: Vec<u8> = io::read(TEST_CHANNEL);
+    let proof_bytes: Vec<u8> = io::read(PROOF_CHANNEL);
+    let pvk_bytes: Vec<u8> = io::read(PVK_CHANNEL);
     let big_int_value = BigInt::<4>::new([
         1875955372304588914,
         12194129877466962247,
@@ -59,23 +48,12 @@ fn main() {
 
     let image: Fp<ark_ff::MontBackend<ark_bn254::FrConfig, 4>, 4> = Fr::from(big_int_value);
     
-    // let deserialized_pvk: PreparedVerifyingKey<Bn254> = {
-    //     PreparedVerifyingKey::deserialize_uncompressed(&mut &pvk_str[..]).unwrap()
-    // };
-    let deserialized_proof: ark_groth16::Proof<Bn<Config>> = {
-        ark_groth16::Proof::deserialize_uncompressed(&mut &pvk_bytes[..]).unwrap()
+    let deserialized_pvk: PreparedVerifyingKey<Bn254> = {
+        PreparedVerifyingKey::deserialize_uncompressed(&mut &pvk_bytes[..]).unwrap()
     };
-    // let xl = Fr::from(rand);
-    // let xr = Fr::from(rand);
-    // let image = mimc(xl, xr, &constants);
-    // let deserialized_proof: ark_groth16::Proof<Bn<Config>> = {
-    //     ark_groth16::Proof::deserialize_uncompressed(&mut &PROOF_BYTES[..]).unwrap()
-    // };
-    // let deserialized_proof: ark_groth16::Proof<Bn<Config>> = {
-    //     ark_groth16::Proof::deserialize_uncompressed(&mut &PROOF_BYTES[..]).unwrap()
-    // };
+    let deserialized_proof: ark_groth16::Proof<Bn<Config>> = {
+        ark_groth16::Proof::deserialize_uncompressed(&mut &proof_bytes[..]).unwrap()
+    };
 
-    // let deserialized_proof: ark_groth16::Proof<Bn<Config>> = deserialized.unwrap_or_default();
-
-    // Groth16::<Bn254>::verify_with_processed_vk(&deserialized_pvk, &[image], &deserialized_proof).unwrap();
+    Groth16::<Bn254>::verify_with_processed_vk(&deserialized_pvk, &[image], &deserialized_proof).unwrap();
 }
